@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
 from calculadora.calculadora_balistica import CalculadoraBalistica
+from calculadora.exportar_datos import calcular_datos_tabla, exportar_a_csv  # Importar las funciones
+
 
 class AplicacionGUI(tk.Tk):
   def __init__(self):
@@ -68,6 +70,10 @@ class AplicacionGUI(tk.Tk):
       tk.Button(self, text="Graficar Trayectoria", command=self.graficar_trayectoria).grid(row=12, column=0)
       tk.Button(self, text="Exportar a CSV", command=self.exportar_csv).grid(row=12, column=1)
 
+      # Botón para exportar datos de la tabla
+      tk.Button(self, text="Exportar Tabla de Tiro", command=self.exportar_tabla).grid(row=13, column=0)
+
+
   def calcular(self):
       try:
           angulo = float(self.entrada_angulo.get())
@@ -123,3 +129,14 @@ class AplicacionGUI(tk.Tk):
               messagebox.showinfo("Exportación Completa", f"Datos exportados a {archivo}")
       else:
           messagebox.showwarning("Sin Datos", "Por favor, realiza un cálculo primero.")
+
+
+  def exportar_tabla(self):
+      if hasattr(self, 'calculadora') and self.modelo_seleccionado.get() == 'masa_puntual':
+          datos_tabla = calcular_datos_tabla(self.calculadora.modelo)
+          archivo = filedialog.asksaveasfilename(defaultextension='.csv', filetypes=[("Archivos CSV", "*.csv")])
+          if archivo:
+              exportar_a_csv(datos_tabla, archivo)
+              messagebox.showinfo("Exportación Completa", f"Datos exportados a {archivo}")
+      else:
+          messagebox.showwarning("Modelo Incorrecto", "Por favor, selecciona el modelo de masa puntual y realiza un cálculo primero.")
