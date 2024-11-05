@@ -6,7 +6,7 @@ class CoeficientesAerodinamicos:
 
   def calcular_coeficiente_arrastre(self, V, angulo_ataque_rad):
       # Método simplificado para calcular Cd
-      Cd0 = 0.295  # Coeficiente de arrastre base para el proyectil de mortero
+      Cd0 = 0.095  # Coeficiente de arrastre base para el proyectil de mortero
       Cd = Cd0 + 0.05 * angulo_ataque_rad  # Ajuste según el ángulo de ataque
       return Cd
 
