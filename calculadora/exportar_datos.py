@@ -5,59 +5,81 @@ import numpy as np
 from calculadora.calculadora_balistica import CalculadoraBalistica
 
 
-def encontrar_angulo_para_alcance(alcance_objetivo, velocidad_inicial, altura_inicial, densidad_aire, latitud=32.0,
-                                  tolerancia=1.0):
+def calcular_alcance_para_angulo(angulo, velocidad_inicial, altura_inicial, densidad_aire, latitud=32.0):
     """
-    Encuentra el ángulo necesario para alcanzar una distancia específica
-    usando búsqueda binaria.
+    Calcula el alcance para un ángulo específico
     """
-    angulo_min = 0
-    angulo_max = 90
+    calculadora = CalculadoraBalistica('masa_puntual')
+    calculadora.establecer_parametros(angulo, velocidad_inicial, altura_inicial, densidad_aire, latitud)
+    calculadora.calcular_trayectoria()
+    return calculadora.alcance_maximo, calculadora
 
-    while angulo_max - angulo_min > 0.01:  # Precisión de 0.01 grados
-        angulo = (angulo_min + angulo_max) / 2
-        calculadora = CalculadoraBalistica('masa_puntual')
-        calculadora.establecer_parametros(angulo, velocidad_inicial, altura_inicial, densidad_aire, latitud)
-        calculadora.calcular_trayectoria()
 
-        alcance_actual = calculadora.alcance_maximo
+def encontrar_angulos_para_alcance(alcance_objetivo, velocidad_inicial, altura_inicial, densidad_aire, latitud=32.0,
+                                   tolerancia=1.0):
+    """
+    Encuentra los dos ángulos posibles (trayectoria alta y baja) para un alcance específico
+    """
+    angulos = []
+
+    # Búsqueda en el rango de ángulos altos (90° a 45°)
+    angulo_min_alto = 45
+    angulo_max_alto = 90
+
+    # Búsqueda binaria para el ángulo alto
+    while angulo_max_alto - angulo_min_alto > 0.01:
+        angulo = (angulo_min_alto + angulo_max_alto) / 2
+        alcance_actual, _ = calcular_alcance_para_angulo(angulo, velocidad_inicial,
+                                                         altura_inicial, densidad_aire, latitud)
 
         if abs(alcance_actual - alcance_objetivo) < tolerancia:
-            return angulo, calculadora
+            angulos.append(angulo)
+            break
         elif alcance_actual < alcance_objetivo:
-            angulo_min = angulo
+            angulo_max_alto = angulo
         else:
-            angulo_max = angulo
+            angulo_min_alto = angulo
 
-    return None, None
+    return angulos[0] if angulos else None
 
 
 def calcular_datos_tabla(velocidad_inicial=320, altura_inicial=0, densidad_aire=1.225, latitud=32.0, intervalo=100):
     """
-    Calcula la tabla de tiro en intervalos de distancia especificados
+    Calcula la tabla de tiro en intervalos de distancia especificados,
+    considerando ángulos entre 90° y 45°
     """
     datos = []
     alza_anterior = None
 
-    # Encontrar el alcance máximo primero
-    calc_max = CalculadoraBalistica('masa_puntual')
-    calc_max.establecer_parametros(45, velocidad_inicial, altura_inicial, densidad_aire, latitud)
-    calc_max.calcular_trayectoria()
-    alcance_maximo = int(calc_max.alcance_maximo)
+    # Encontrar el alcance máximo para 45° (máximo teórico)
+    alcance_45, _ = calcular_alcance_para_angulo(45, velocidad_inicial, altura_inicial,
+                                                 densidad_aire, latitud)
 
-    # Calcular para cada intervalo de 100m
-    for alcance in range(intervalo, alcance_maximo + intervalo, intervalo):
-        angulo, calculadora = encontrar_angulo_para_alcance(
+    # Encontrar el alcance mínimo (para 90°)
+    alcance_90, _ = calcular_alcance_para_angulo(90, velocidad_inicial, altura_inicial,
+                                                 densidad_aire, latitud)
+
+    # Ajustar el alcance inicial al primer múltiplo de intervalo después de alcance_90
+    alcance_inicial = int(np.ceil(alcance_90 / intervalo)) * intervalo
+
+    # Calcular para cada intervalo desde el alcance mínimo hasta el máximo
+    for alcance in range(alcance_inicial, int(alcance_45) + intervalo, intervalo):
+        angulo = encontrar_angulos_para_alcance(
             alcance, velocidad_inicial, altura_inicial, densidad_aire, latitud
         )
 
         if angulo is not None:
+            # Calcular la trayectoria completa para obtener todos los datos
+            _, calculadora = calcular_alcance_para_angulo(
+                angulo, velocidad_inicial, altura_inicial, densidad_aire, latitud
+            )
+
             # Convertir ángulo a mils (1 grado ≈ 17.777778 mils)
             alza = angulo * 17.777778
 
             # Calcular la diferencia de alza
             if alza_anterior is None:
-                var_alza = 53.33  # Primer valor fijo
+                var_alza = 7.81  # Primer valor fijo
             else:
                 var_alza = alza - alza_anterior
 
