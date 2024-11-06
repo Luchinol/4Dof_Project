@@ -130,13 +130,29 @@ class AplicacionGUI(tk.Tk):
       else:
           messagebox.showwarning("Sin Datos", "Por favor, realiza un cálculo primero.")
 
-
   def exportar_tabla(self):
-      if hasattr(self, 'calculadora') and self.modelo_seleccionado.get() == 'masa_puntual':
-          datos_tabla = calcular_datos_tabla(self.calculadora.modelo)
-          archivo = filedialog.asksaveasfilename(defaultextension='.csv', filetypes=[("Archivos CSV", "*.csv")])
-          if archivo:
-              exportar_a_csv(datos_tabla, archivo)
-              messagebox.showinfo("Exportación Completa", f"Datos exportados a {archivo}")
+      if hasattr(self, 'calculadora'):
+          try:
+              velocidad = float(self.entrada_velocidad.get())
+              altura = float(self.entrada_altura.get())
+              densidad = float(self.entrada_densidad.get())
+              latitud = float(self.entrada_latitud.get())
+
+              archivo = filedialog.asksaveasfilename(
+                  defaultextension='.csv',
+                  filetypes=[("Archivos CSV", "*.csv")]
+              )
+
+              if archivo:
+                  datos = calcular_datos_tabla(
+                      velocidad_inicial=velocidad,
+                      altura_inicial=altura,
+                      densidad_aire=densidad,
+                      latitud=latitud
+                  )
+                  exportar_a_csv(datos, archivo)
+                  messagebox.showinfo("Exportación Completa", f"Tabla de tiro exportada a {archivo}")
+          except ValueError:
+              messagebox.showerror("Error", "Por favor, verifica que todos los campos numéricos sean válidos")
       else:
-          messagebox.showwarning("Modelo Incorrecto", "Por favor, selecciona el modelo de masa puntual y realiza un cálculo primero.")
+          messagebox.showwarning("Sin datos", "Por favor, realiza un cálculo primero")
