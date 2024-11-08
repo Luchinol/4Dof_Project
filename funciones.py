@@ -1,5 +1,4 @@
 # funciones.py
-
 import numpy as np
 
 def grados_a_radianes(grados):
